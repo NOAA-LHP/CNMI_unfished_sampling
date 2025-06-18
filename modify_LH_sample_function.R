@@ -1,7 +1,7 @@
 ### -----------------------------------------------------------------------------------------
-#	June 16 2025
+#	June 2025
 #	  modify LH_sample functions and add some new functions
-#
+#	  these will be used in R markdown to create summary reports
 ### -----------------------------------------------------------------------------------------
 
 
@@ -23,7 +23,7 @@
 	Linf_sd = 2.5
 	M = 0.125
 	F = 0.01
-	Lorenzen = TRUE
+	Lorenzen = 1
 	mincat = 10
 	catsd = 2.5
 	maxcat = 200
@@ -57,7 +57,7 @@ simulate_population_harvest <- function(Linf,Linf_sd, M, Lorenzen, F, mincat, ca
   
   # --------  IF USING LORENZEN LENGTH-DEPENDENT NATURAL MORTALITY 
   # Solve for M1 now
-  if (Lorenzen == TRUE) {
+  if (Lorenzen == TRUE | Lorenzen == 1) {
     survship <- data.frame(Ages = seq(0,Amax,1), L_age=9999, M_L_hat=9999, 
                            Mr_L_hat = 9999, N_age=9999)
     # calc A0
@@ -104,7 +104,7 @@ simulate_population_harvest <- function(Linf,Linf_sd, M, Lorenzen, F, mincat, ca
     #	    Linf = C1*k^(-1/LW_beta)	where LW_beta is the theoretical allometric W-L scalar, assume = 3 here		
     #	 so, if we want them to correlate; mean Linf to sample from is calculated from k and solved value of Jensen_C1
 
-      if(Linf_k_cor_TF == TRUE) {
+      if(Linf_k_cor_TF == TRUE | Linf_k_cor_TF == 1) {
 	  Jensen_C1 <- Linf/(k^(-1/3))
 	  cohort[,2] = rnorm(N, mean = (Jensen_C1*(cohort[,3]^(-1/3))), sd = Linf_sd)
  	  }
@@ -231,7 +231,7 @@ simulate_population_harvest <- function(Linf,Linf_sd, M, Lorenzen, F, mincat, ca
   
   Avg_age$Selex <- pmin((1-pnorm(mincat,Avg_age$L_age,catsd)),pnorm(maxcat,Avg_age$L_age,maxcatsd))
   
-  if (Lorenzen == TRUE) {
+  if (Lorenzen == TRUE | Lorenzen == 1) {
     M1 = M1
   } else {
     M1 = 'NA'
