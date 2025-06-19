@@ -116,6 +116,12 @@ simulate_population_harvest <- function(Linf,Linf_sd, M, Lorenzen, F, mincat, ca
         k_Linf_cor_value <- cor(cohort[,3],cohort[,2])
     
     cohort[,1]= (log(1-(cohort[,4]/cohort[,2])))/cohort[,3]
+
+    if (i == 1) {
+	sample_cohort <- as.data.frame(cohort[,1:4])
+	names(sample_cohort)[] <- c("a0","Linf","k","L0")
+	}
+
     #  end update
 
     # ----- step A. grow the fish, all survive
@@ -271,7 +277,7 @@ simulate_population_harvest <- function(Linf,Linf_sd, M, Lorenzen, F, mincat, ca
 		     Linf_k_cor_TF = Linf_k_cor_TF,
 		     k_Linf_cor_value = k_Linf_cor_value)
   
-  return(list(population = population, harvest = harvest, Avg_age = Avg_age, parameters = params))
+  return(list(population = population, harvest = harvest, Avg_age = Avg_age, parameters = params, sample_cohort = sample_cohort))
   
 }	#  --------------------------------  end function
 
@@ -375,7 +381,6 @@ fit_plan <- function(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
   time_start <- Sys.time()
   print(time_start)
   count_error <- 0
-  
   
   #  define population_true and population_harvest
   population_true <- sim_output$population				# str(population_true)	

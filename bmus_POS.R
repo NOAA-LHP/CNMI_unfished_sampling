@@ -64,12 +64,48 @@ names(have_lengths)[] <- c('species','length')
   #  save this for later to save time if still doing dev 
   # save(onaga, file = paste0(this_dir, "\\onaga_sim_dev.RData"))
 
+  Jensen_C1 <- onaga$parameters$Linf/(onaga$parameters$k^(-1/3))
+  plot_jensens <- data.frame(k_range = seq(0.01,0.5,0.005))
+  plot_jensens$calc_Linf <- Jensen_C1*plot_jensens$k_range^(-1/3)
+  k_Linf_cor <- round(cor(onaga$sample_cohort$k, onaga$sample_cohort$Linf),2)
+
+
+  par(mfrow = c(2,2))
+
+  hist(onaga$sample_cohort$L0, main="L0", xlab="cm")
+  hist(onaga$sample_cohort$k, main="k", xlab="")
+  hist(onaga$sample_cohort$Linf, main="Linf", xlab="cm")
+  plot(onaga$sample_cohort$k, onaga$sample_cohort$Linf, main="cor(k,Linf)", xlab= "k", ylab="Linf")
+  lines(plot_jensens$k_range, plot_jensens$calc_Linf, lty=2, col="red")
+  mtext(k_Linf_cor,line=-2, side = 3, adj=0.9)
+
+  #  fit the von Bertalanffy parameters to the entire population now
+  plot_fit <- nls(length ~ Linf* (1-exp(-(K1*(age-a0)))),
+                                   data=onaga$population, start = list (Linf = 100, K1 = 0.14, a0=0.1))
+
+
+
+  plot_parms <- data.frame(Linf = as.numeric(coef(plot_fit)[1]),
+				  K1 = as.numeric(coef(plot_fit)[2]),          
+				  a0 = as.numeric(coef(plot_fit)[3]), 
+				  L0 =  mean(subset(onaga$population, age == 0)$length))
+
+  plot_vb <- data.frame(age = seq(0, onaga$parameters$Amax,0.1))
+  plot_vb$length <-plot_parms$Linf*(1-exp(-(plot_parms$K1)*(plot_vb$age-plot_parms$a0)))
+ 
+
+  plot_pop <- sample_n(onaga$population, 10000)
+  plot(plot_pop$age, plot_pop$length, main = "Population length at age", xlab = "years", ylab = "cm")
+  lines(plot_vb$age, plot_vb$length, lty=1, lwd=2, col="red")
+
+
 
 # -- step 3. what would a POS approach look like, if we could sample directly from the population?
 #  	use the find_POS function
 
   plan <- find_POS(sim_output = onaga, samp_size = 300, Lbin_width = 5)		#  str(plan)
 
+  plot(onaga$population$age, onaga$population$length)
 
 # -- 4. put together do figures and tables.
 
