@@ -1,0 +1,105 @@
+---
+# title: 
+output: 
+  word_document:
+    reference_docx: PIFSC_style_simple.docx
+# date: 
+---
+
+``` {r read_in_data, include = FALSE, eval = TRUE}
+# knitr::opts_chunk$set(cache = TRUE)
+# knitr::opts_chunk$set(eval = FALSE)
+
+if (!require("pacman")) install.packages("pacman")
+    pacman::p_load(reshape, dplyr, ggplot2, magrittr, assertthat, gridExtra, readxl, this.path, kableExtra, flextable, gt, officer)
+
+# turn off scientific notation in console output
+  options(scipen=999)
+
+  this_dir <- this.path::here(.. = 0)
+
+# load the workspace containing our simulated populations
+  load(paste0(this_dir, "/onaga_sim_dev.RData"))
+  
+# load the functions we will use
+  source(paste0(this_dir, "/plotting_functions.R")) 
+
+
+```
+
+## *`r full_sci`*
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, messages = FALSE, warnings=FALSE, fig.height = 3, fig.width = 6.5}
+plot(bar_pos_year(data_set))
+```
+
+Figure 1. Number of bottomfishing interviews positive for *`r short_sci`* by year. The nominal probability of occurrence for 1982-2023 was `r prop_pos`.
+
+|
+
+| Table 1. Selected models for the presence/absence and positive processes with the number of interviews used in the model (n), the number of parameters in the model (nparm), and the deviance explained relative to the intercept only model (Dev. Expl.).
+
+```{r echo=FALSE, messages = FALSE, warnings=FALSE}
+
+dt <- delta_summary(pa_model_object, pos_model_object)
+set_flextable_defaults(font.size = 12, font.family = "Arial", border.width = 1, border.color = "black", font.color = "black")
+invisible(fp_border(color = "black", style = "solid", width = 1))
+
+dt.ft <- flextable(dt)
+# set_caption(dt.ft, caption = 'Table caption', word_stylename = "Caption")
+dt.ft <- border(dt.ft, border.top = fp_border())
+dt.ft <- border(dt.ft, border.bottom = fp_border())
+dt.ft <- border(dt.ft, border.left = fp_border())
+dt.ft <- border(dt.ft, border.right = fp_border())
+dt.ft <- border(dt.ft, border.left = fp_border(), part = "header")
+dt.ft <- border(dt.ft, border.right = fp_border(), part = "header")
+dt.ft <- hline_bottom(dt.ft, border = fp_border())
+dt.ft <- hline_top(dt.ft, border = fp_border(), part = "header")
+dt.ft <- hline_bottom(dt.ft, border = fp_border(), part = "header")
+dt.ft <- hline_top(dt.ft, border = fp_border())
+dt.ft <- vline_left(dt.ft, border = fp_border())
+dt.ft <- vline_right(dt.ft, border = fp_border())
+dt.ft <- align(dt.ft, j = 3, align = "right", part = "body")
+dt.ft <- align(dt.ft, j = 4, align = "right", part = "body")
+dt.ft <- align(dt.ft, j = 5, align = "right", part = "body")
+dt.ft <- bold(dt.ft, bold = TRUE, part = "header")
+
+dt.ft <- autofit(dt.ft)
+
+dt.ft
+```
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 6.5}
+basic_CPUE_diags(pa_model_object)
+```
+
+Figure 2. Residual distributions of the presence/absence process model selected for the *`r short_sci`* CPUE standardization.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 7, fig.width = 6.5}
+basic_CPUE_diags(pos_model_object)
+```
+
+Figure 3. Residual distributions of the positive process model selected for the *`r short_sci`* CPUE standardization.
+
+
+```{r echo=FALSE}
+pa_model <- pa_model_object$best_gam
+pos_model <- pos_model_object$best_gam	
+```
+
+```{r echo=FALSE}
+calc_index <- calculate_index(species=species,pa_model=pa_model, pos_model=pos_model)  
+plot_CPUE <- plot_std_nom_scaled(species=species, index_object=calc_index, data_set=data_set)
+  
+```
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, messages = FALSE, warnings=FALSE, fig.height = 4, fig.width = 6.5}
+plot(plot_CPUE)
+```
+
+Figure 4. Standardized CPUE index (line) and nominal CPUE (points) of *`r short_sci`*.
+
+
+
+
