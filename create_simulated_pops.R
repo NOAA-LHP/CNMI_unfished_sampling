@@ -76,7 +76,7 @@
   save(APRU, ETCA, ETCO, PRAU, PRFI, PRFL, PRZO, all_BMUS_pop_parms, file = paste0(this_dir, "/simulated_pops.RData"))
 
 
-
+names(PRAU)
 
 ### 
 

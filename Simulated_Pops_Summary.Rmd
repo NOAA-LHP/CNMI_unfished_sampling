@@ -17,89 +17,277 @@ if (!require("pacman")) install.packages("pacman")
   options(scipen=999)
 
   this_dir <- this.path::here(.. = 0)
-
+  
 # load the workspace containing our simulated populations
-  load(paste0(this_dir, "/onaga_sim_dev.RData"))
+  load(paste0(this_dir, "/simulated_pops.RData"))
   
 # load the functions we will use
   source(paste0(this_dir, "/plotting_functions.R")) 
 
-
+  short_name <- 'APRU'
+  full_name <- 'A. rutilans'
+  sim_pop_harv_output <- APRU
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
 ```
 
-## *`r full_sci`*
+## *`r full_name`* / `r short_name`
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, messages = FALSE, warnings=FALSE, fig.height = 3, fig.width = 6.5}
-plot(bar_pos_year(data_set))
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
 ```
 
-Figure 1. Number of bottomfishing interviews positive for *`r short_sci`* by year. The nominal probability of occurrence for 1982-2023 was `r prop_pos`.
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population length composition.
 
 |
+|
 
-| Table 1. Selected models for the presence/absence and positive processes with the number of interviews used in the model (n), the number of parameters in the model (nparm), and the deviance explained relative to the intercept only model (Dev. Expl.).
 
-```{r echo=FALSE, messages = FALSE, warnings=FALSE}
-
-dt <- delta_summary(pa_model_object, pos_model_object)
-set_flextable_defaults(font.size = 12, font.family = "Arial", border.width = 1, border.color = "black", font.color = "black")
-invisible(fp_border(color = "black", style = "solid", width = 1))
-
-dt.ft <- flextable(dt)
-# set_caption(dt.ft, caption = 'Table caption', word_stylename = "Caption")
-dt.ft <- border(dt.ft, border.top = fp_border())
-dt.ft <- border(dt.ft, border.bottom = fp_border())
-dt.ft <- border(dt.ft, border.left = fp_border())
-dt.ft <- border(dt.ft, border.right = fp_border())
-dt.ft <- border(dt.ft, border.left = fp_border(), part = "header")
-dt.ft <- border(dt.ft, border.right = fp_border(), part = "header")
-dt.ft <- hline_bottom(dt.ft, border = fp_border())
-dt.ft <- hline_top(dt.ft, border = fp_border(), part = "header")
-dt.ft <- hline_bottom(dt.ft, border = fp_border(), part = "header")
-dt.ft <- hline_top(dt.ft, border = fp_border())
-dt.ft <- vline_left(dt.ft, border = fp_border())
-dt.ft <- vline_right(dt.ft, border = fp_border())
-dt.ft <- align(dt.ft, j = 3, align = "right", part = "body")
-dt.ft <- align(dt.ft, j = 4, align = "right", part = "body")
-dt.ft <- align(dt.ft, j = 5, align = "right", part = "body")
-dt.ft <- bold(dt.ft, bold = TRUE, part = "header")
-
-dt.ft <- autofit(dt.ft)
-
-dt.ft
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 6.5}
-basic_CPUE_diags(pa_model_object)
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+
+
+
+
+``` {r ETCA, include = FALSE, eval = TRUE}
+
+  short_name <- 'ETCA'
+  full_name <- 'E. carbunculus'
+  sim_pop_harv_output <- ETCA
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
 ```
 
-Figure 2. Residual distributions of the presence/absence process model selected for the *`r short_sci`* CPUE standardization.
+## *`r full_name`* / `r short_name`
 
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 7, fig.width = 6.5}
-basic_CPUE_diags(pos_model_object)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
 ```
 
-Figure 3. Residual distributions of the positive process model selected for the *`r short_sci`* CPUE standardization.
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
 
 
-```{r echo=FALSE}
-pa_model <- pa_model_object$best_gam
-pos_model <- pos_model_object$best_gam	
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
 ```
 
-```{r echo=FALSE}
-calc_index <- calculate_index(species=species,pa_model=pa_model, pos_model=pos_model)  
-plot_CPUE <- plot_std_nom_scaled(species=species, index_object=calc_index, data_set=data_set)
-  
+Figure. Simulated `r short_name` unfished population length composition.
+
+|
+|
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, messages = FALSE, warnings=FALSE, fig.height = 4, fig.width = 6.5}
-plot(plot_CPUE)
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+
+
+
+
+
+
+``` {r ETCO, include = FALSE, eval = TRUE}
+
+  short_name <- 'ETCO'
+  full_name <- 'E. coruscans'
+  sim_pop_harv_output <- ETCO
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
 ```
 
-Figure 4. Standardized CPUE index (line) and nominal CPUE (points) of *`r short_sci`*.
+## *`r full_name`* / `r short_name`
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
+```
+
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population length composition.
+
+|
+|
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
 
 
 
+``` {r PRAU, include = FALSE, eval = TRUE}
+
+  short_name <- 'PRAU'
+  full_name <- 'P. auricilla'
+  sim_pop_harv_output <- PRAU
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
+```
+
+## *`r full_name`* / `r short_name`
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
+```
+
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population length composition.
+
+|
+|
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+
+
+
+``` {r PRFI, include = FALSE, eval = TRUE}
+
+  short_name <- 'PRFI'
+  full_name <- 'P. filamentosus'
+  sim_pop_harv_output <- PRFI
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
+```
+
+## *`r full_name`* / `r short_name`
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
+```
+
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population length composition.
+
+|
+|
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+
+
+
+``` {r PRFL, include = FALSE, eval = TRUE}
+
+  short_name <- 'PRFL'
+  full_name <- 'P. flavipinnis'
+  sim_pop_harv_output <- PRFL
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
+```
+
+## *`r full_name`* / `r short_name`
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
+```
+
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population length composition.
+
+|
+|
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+
+
+
+
+``` {r PRZO, include = FALSE, eval = TRUE}
+
+  short_name <- 'PRZO'
+  full_name <- 'P. zonatus'
+  sim_pop_harv_output <- PRZO
+  this_M <- sim_pop_harv_output$parameters$M
+  this_Amax <- sim_pop_harv_output$parameters$Amax
+    
+```
+
+## *`r full_name`* / `r short_name`
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
+plot_pop_vb_parms(sim_pop_harv_output)
+```
+
+Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
+plot_pop_n_at_age(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population length composition.
+
+|
+|
+
+
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
+plot_fit_pop(sim_pop_harv_output)
+```
+
+Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
 

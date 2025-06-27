@@ -5,6 +5,26 @@
 ### -----------------------------------------------------------------------------------------
 
 
+#---- DEV:
+
+#----- load packages, adjust options, and define working directory
+
+# rm(list=ls())
+   if (!require("pacman")) install.packages("pacman")
+    pacman::p_load(reshape, dplyr, ggplot2, magrittr, assertthat, gridExtra, readxl, this.path)
+
+# turn off scientific notation in console output
+  options(scipen=999)
+
+  this_dir <- this.path::here(.. = 0)
+
+
+load(paste0(this_dir, "/simulated_pops.RData"))
+
+
+#  sim_pop_harv_output <- APRU			# names(APRU$parameters$M)
+
+
 
 
 plot_pop_vb_parms <- function(sim_pop_harv_output) {
@@ -20,7 +40,7 @@ plot_pop_vb_parms <- function(sim_pop_harv_output) {
     # 4-panel plot in base R
     par(mfrow = c(2,2))
     par(omi=c(0.1,0.1,0.1,0.1)) #set outer margins
-    par(mai=c(0.7,0.7, 0.3, 0.1)) #set inner margins
+    par(mai=c(0.9,0.9, 0.3, 0.1)) #set inner margins
 
       hist(plotme$L0, main="L0", xlab="cm")
 	  abline(v=median(sim_pop_harv_output$sample_cohort$L0), lwd=2, lty=2, col="red")
@@ -28,13 +48,14 @@ plot_pop_vb_parms <- function(sim_pop_harv_output) {
         abline(v=median(sim_pop_harv_output$sample_cohort$k), lwd=2, lty=2, col="red")
       hist(plotme$Linf, main="Linf", xlab="cm")
 	  abline(v=median(sim_pop_harv_output$sample_cohort$Linf), lwd=2, lty=2, col="red")
-      plot(plotme$k, plotme$Linf, main="k vs. Linf", xlab= "k", ylab="Linf, cm")
+      plot(plotme$k, plotme$Linf, main="cor(k,Linf)", xlab= "k", ylab="Linf")
         lines(plot_jensens$k_range, plot_jensens$calc_Linf, lwd=2, lty=3, col="red")
         mtext(k_Linf_cor,line=-2, side = 3, adj=0.9)
 
 	plot_pop_vb_parms <- recordPlot()
       
   }
+
 
 
 plot_fit_pop <- function(sim_pop_harv_output) {
@@ -52,11 +73,8 @@ plot_fit_pop <- function(sim_pop_harv_output) {
   plot_vb <- data.frame(age = seq(0, sim_pop_harv_output$parameters$Amax,0.1))
   plot_vb$length <-plot_parms$Linf*(1-exp(-(plot_parms$K1)*(plot_vb$age-plot_parms$a0)))
  
+
   plot_pop <- sample_n(sim_pop_harv_output$population, 10000)
-
-  par(omi=c(0.1,0.1,0.1,0.1)) #set outer margins
-  par(mai=c(0.8,0.8, 0.3, 0.1)) #set inner margins
-
   plot(plot_pop$age, plot_pop$length, main = "Population length at age", xlab = "years", ylab = "cm")
   lines(plot_vb$age, plot_vb$length, lty=1, lwd=2, col="red")
 
@@ -67,18 +85,67 @@ plot_fit_pop <- function(sim_pop_harv_output) {
 
 
 
+
 plot_pop_n_at_age <- function(sim_pop_harv_output) {
 
-  par(omi=c(0.1,0.1,0.1,0.1)) #set outer margins
-  par(mai=c(0.8,0.2, 0.3, 0.1)) #set inner margins
-
   hist(sim_pop_harv_output$population$length,include.lowest=TRUE, right=FALSE,plot=TRUE,
-		main = "Population N at length", xlab= "cm", yaxt = "n")
+		main = "Population N at length", xlab= "cm", ylab = "count" )
 
   plot_pop_n_at_age <- recordPlot()
 
   }
 
+
+
+names(sim_pop_harv_output)
+str(sim_pop_harv_output$sample_cohort)
+
+try_it <- subset(sim_pop_harv_output$sample_cohort, k < 0.141 & k > 0.139)
+      hist(try_it$Linf, xlab="cm")
+median(try_it$Linf)
+
+	  abline(v=median(sim_pop_harv_output$sample_cohort$L0), lwd=2, lty=2, col="red")
+
+
+    # take a look
+    plotme <- onaga 
+    hist_pop <- hist(plotme$population$length,include.lowest=TRUE, right=FALSE,plot=TRUE)
+
+  Jensen_C1 <- plotme$parameters$Linf/(plotme$parameters$k^(-1/3))
+  plot_jensens <- data.frame(k_range = seq(0.01,0.9,0.005))
+  plot_jensens$calc_Linf <- Jensen_C1*plot_jensens$k_range^(-1/3)
+  k_Linf_cor <- round(cor(plotme$sample_cohort$k, plotme$sample_cohort$Linf),2)
+
+
+  par(mfrow = c(2,2))
+
+  hist(plotme$sample_cohort$L0, main="L0", xlab="cm")
+  hist(plotme$sample_cohort$k, main="k", xlab="")
+  hist(plotme$sample_cohort$Linf, main="Linf", xlab="cm")
+  plot(plotme$sample_cohort$k, plotme$sample_cohort$Linf, main="cor(k,Linf)", xlab= "k", ylab="Linf")
+  lines(plot_jensens$k_range, plot_jensens$calc_Linf, lwd=2, lty=3, col="red")
+  mtext(k_Linf_cor,line=-2, side = 3, adj=0.9)
+
+
+
+  #  fit the von Bertalanffy parameters to the entire population now
+  plot_fit <- nls(length ~ Linf* (1-exp(-(K1*(age-a0)))),
+                                   data=plotme$population, start = list (Linf = 100, K1 = 0.14, a0=0.1))
+
+
+
+  plot_parms <- data.frame(Linf = as.numeric(coef(plot_fit)[1]),
+				  K1 = as.numeric(coef(plot_fit)[2]),          
+				  a0 = as.numeric(coef(plot_fit)[3]), 
+				  L0 =  mean(subset(plotme$population, age == 0)$length))
+
+  plot_vb <- data.frame(age = seq(0, plotme$parameters$Amax,0.1))
+  plot_vb$length <-plot_parms$Linf*(1-exp(-(plot_parms$K1)*(plot_vb$age-plot_parms$a0)))
+ 
+
+  plot_pop <- sample_n(plotme$population, 10000)
+  plot(plot_pop$age, plot_pop$length, main = "Population length at age", xlab = "years", ylab = "cm")
+  lines(plot_vb$age, plot_vb$length, lty=1, lwd=2, col="red")
 
 
 
