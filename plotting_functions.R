@@ -81,6 +81,38 @@ plot_pop_n_at_age <- function(sim_pop_harv_output) {
 
 
 
+if (1==2) {
+
+if (!require("pacman")) install.packages("pacman")
+    pacman::p_load(reshape, dplyr, ggplot2, magrittr, assertthat, gridExtra, readxl, this.path, kableExtra, flextable, gt, officer)
+
+# turn off scientific notation in console output
+  options(scipen=999)
+
+  this_dir <- this.path::here(.. = 0)
+
+
+  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples.csv"),header=T)
+  have_lengths <- have_lengths[,c(2,5,10)]
+  
+  names(have_lengths)[] <- c('species','length','type')
+
+}
+
+
+plot_LH_have <- function(have_lengths) {
+
+  par(omi=c(0.1,0.1,0.1,0.1)) #set outer margins
+  par(mai=c(0.8,0.2, 0.3, 0.1)) #set inner margins
+
+  hist(sim_pop_harv_output$population$length,include.lowest=TRUE, right=FALSE,plot=TRUE,
+		main = "Population N at length", xlab= "cm", yaxt = "n")
+
+  plot_pop_n_at_age <- recordPlot()
+
+  }
+
+
 
 
 

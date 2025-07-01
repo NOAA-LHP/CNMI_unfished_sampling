@@ -16,15 +16,15 @@
 
 # turn off scientific notation in console output
   options(scipen=999)
-
   this_dir <- this.path::here(.. = 0)
 
 #----- read in the modified LH Sampling functions
-
   source(paste0(this_dir, "/modify_LH_sample_function.R"))
 
-#----- read in the excel sheet containing true population parameters
+#----- if exists, read in previous simulated pops
+  #   load(paste0(this_dir, "/simulated_pops.RData"))
 
+#----- read in the excel sheet containing true population parameters
   all_BMUS_pop_parms <- as.data.frame(read_excel(paste0(this_dir, "/BMUS_LH_sim_pop_parameters.xlsx"), sheet = "parms"))	# str(all_BMUS_pop_parms)
 
 
@@ -73,10 +73,10 @@
     PRZO <- do.call(simulate_population_harvest, PRZO_pop_parms)
 
 
-  save(APRU, ETCA, ETCO, PRAU, PRFI, PRFL, PRZO, all_BMUS_pop_parms, file = paste0(this_dir, "/simulated_pops.RData"))
+  save(APRU, ETCA, ETCO, PRAU, PRFI, PRFL, PRZO, all_BMUS_pop_parms, file = paste0(this_dir, "/simulated_pops_30Jun.RData"))
 
 
-names(PRAU)
+#  names(PRAU)
 
 ### 
 

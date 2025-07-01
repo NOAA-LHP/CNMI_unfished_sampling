@@ -19,17 +19,32 @@ if (!require("pacman")) install.packages("pacman")
   this_dir <- this.path::here(.. = 0)
   
 # load the workspace containing our simulated populations
-  load(paste0(this_dir, "/simulated_pops_30Jun.RData"))
-  
-# load the functions we will use
-  source(paste0(this_dir, "/plotting_functions.R")) 
+  load(paste0(this_dir, "/simulated_pops.RData"))
 
-  short_name <- 'APRU'
-  full_name <- 'A. rutilans'
-  sim_pop_harv_output <- APRU
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+# read in the modified LH Sampling functions
+  source(paste0(this_dir, "/modify_LH_sample_function.R"))
+  
+# load the plotting functions we will use
+  source(paste0(this_dir, "/plotting_functions.R")) 
+  
+# read in the .csv file with the species and lengths that we have
+  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples.csv"),header=T)
+  have_lengths <- have_lengths[,c(2,5,10)]
+  
+  names(have_lengths)[] <- c('species','length','type')
+```
+
+``` {r , include = FALSE, eval = TRUE}
+  short_name <- 'PRZO'
+  full_name <- 'Pristipomoides zonatus'
+  sim_pop_harv_output <- PRZO
     
+  have <- subset(have_lengths, species ==  full_name)
+  hist_have <- hist(have$length, breaks = seq(0,120,5),include.lowest=TRUE, right=FALSE,plot=TRUE)
+
+  we_have <- data.frame('binL' = hist_have$breaks[1:(length(hist_have$breaks)-1)], 'have' = hist_have$counts)
+
+  
 ```
 
 ## *`r full_name`* / `r short_name`
