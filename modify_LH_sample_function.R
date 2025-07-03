@@ -355,6 +355,28 @@ find_POS <- function(sim_output, samp_size, Lbin_width) {
 
 
 ## function 3.
+##	given a list of samples, provide the sampling plan to bootstrap from
+
+get_plan <- function(have, bin_width, original=FALSE) {
+
+  bin_breaks <- seq(0,max(have$length, na.rm=TRUE) + bin_width, bin_width)
+
+  if (original == TRUE) {
+    have <- subset(have, type == "old")
+    }
+
+  hist_have <- hist(have$length, breaks = bin_breaks, include.lowest=TRUE, right=FALSE, plot=FALSE)
+  plan_have <- data.frame('binL' = hist_have$breaks[1:(length(hist_have$breaks)-1)], 'nsamps' = hist_have$counts)
+
+  return(plan_have)
+
+  }
+
+
+
+
+
+## function 4.
 ##	Fit vonB with a given total sample size and length comp- what is the error?
 
 # args
@@ -362,18 +384,26 @@ if (1==2) {
 #  define the sample plan
 
   sample_plan <- data.frame(binL = summary$binL, nsamps = summary$have)		# str(sample_plan)
-  sim_output <- onaga
-  n_boots <- 7
-  age_max <- sim_output$parameters$age_max		# define age max which is for CV_L_old
-  save_bootstraps <- TRUE
+PRZO_plan_orig
+  #    load(paste0(this_dir, "/simulated_pops.RData"))
 
-#  try it
+full_name <- "Pristipomoides zonatus"
+  bin_width <- 2
+  have <- subset(have_lengths, species ==  full_name)		
 
-  try_it <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
+  sample_plan <- PRZO_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- PRZO
+  n_boots <- 10
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
 
-# names(try_it)			#try_it$parameter_outputs
+  PRZO_sim_plan_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
 
+ 
 }
+
+
+
 
 
 #  -----------------  BEGIN READ IN FUNCTION
@@ -385,6 +415,7 @@ fit_plan <- function(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
   time_start <- Sys.time()
   print(time_start)
   count_error <- 0
+  count_empty_pop_bin <- 0
   
   #  define population_true and population_harvest
   population_true <- sim_output$population				# str(population_true)	
@@ -411,7 +442,7 @@ fit_plan <- function(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
   list_some_boot_samps <- list()
   
   #  bin population lengths (get bins from our plan)
-  brks <- plan$binL
+  brks <- sample_plan$binL
   age <- seq(0,sim_output$parameters$Amax,1)
   population_harv$binL <- cut(population_harv[,"length"], breaks=brks, labels=brks[1:(length(brks)-1)],right=F)
   
@@ -423,6 +454,7 @@ fit_plan <- function(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
   
   #  sample according to our plan
   #  BEGIN BOOTSTRAP   --------------------------
+  #	what if our plan max bin exceeds pop max length??		sample_plan$nsamps[23] <- 5
   
   for(i in 1:n_boots) {
     
@@ -432,8 +464,14 @@ fit_plan <- function(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
           sample_me_binL <- sample_plan$binL[pp]
           sample_me_n	<- sample_plan$nsamps[pp]
           sample_me_pop_harv <- subset(population_harv_df, binL_num == sample_me_binL)		#View(sample_build)	
-          sample_me <- sample_n(sample_me_pop_harv, sample_me_n, replace=FALSE)
-          sample_build <- rbind(sample_build, sample_me)
+          if (nrow(sample_me_pop_harv) > sample_me_n) {
+		sample_me <- sample_n(sample_me_pop_harv, sample_me_n, replace=FALSE)
+          	sample_build <- rbind(sample_build, sample_me) }
+	    if (i==1) {
+		if (nrow(sample_me_pop_harv) < sample_me_n) {
+		  count_empty_pop_bin <- count_empty_pop_bin + 1
+		  }
+		}
           }
       
       #drop row 1 of sample_build
@@ -490,6 +528,12 @@ fit_plan <- function(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
     warn_message <- paste('warning: bootstraps convergence fail ', count_error, sep="")
     print(warn_message)
   }
+
+  if (count_empty_pop_bin > 0) {
+    warn_message <- paste('warning: population less than sample plan in ', count_empty_pop_bin, ' length bins', sep="")
+    print(warn_message)
+  }
+
   
   parameter_outputs <- data.frame(Linf = numeric(), K1 = numeric(), a0 = numeric(), CV_L_a0 = numeric(), CV_L_age_max = numeric())
   

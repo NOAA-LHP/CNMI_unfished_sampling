@@ -75,427 +75,134 @@
 
   save(APRU, ETCA, ETCO, PRAU, PRFI, PRFL, PRZO, all_BMUS_pop_parms, file = paste0(this_dir, "/simulated_pops_30Jun.RData"))
 
-
-#  names(PRAU)
-
-### 
+# 
 
 
 
 
+#----- for each BMUS, perform the bootstrap sampling from the simulated populations
+#		based on the samples we have available originally and save in an R space
+#
 
-    # take a look
-    plotme <- PRAU 
-    hist_pop <- hist(plotme$population$length,include.lowest=TRUE, right=FALSE,plot=TRUE)
-
-  Jensen_C1 <- plotme$parameters$Linf/(plotme$parameters$k^(-1/3))
-  plot_jensens <- data.frame(k_range = seq(0.01,0.9,0.005))
-  plot_jensens$calc_Linf <- Jensen_C1*plot_jensens$k_range^(-1/3)
-  k_Linf_cor <- round(cor(plotme$sample_cohort$k, plotme$sample_cohort$Linf),2)
-
-
-  par(mfrow = c(2,2))
-
-  hist(plotme$sample_cohort$L0, main="L0", xlab="cm")
-  hist(plotme$sample_cohort$k, main="k", xlab="")
-  hist(plotme$sample_cohort$Linf, main="Linf", xlab="cm")
-  plot(plotme$sample_cohort$k, plotme$sample_cohort$Linf, main="cor(k,Linf)", xlab= "k", ylab="Linf")
-  lines(plot_jensens$k_range, plot_jensens$calc_Linf, lwd=2, lty=3, col="red")
-  mtext(k_Linf_cor,line=-2, side = 3, adj=0.9)
-
-  #  fit the von Bertalanffy parameters to the entire population now
-  plot_fit <- nls(length ~ Linf* (1-exp(-(K1*(age-a0)))),
-                                   data=plotme$population, start = list (Linf = 100, K1 = 0.14, a0=0.1))
+## read in the samples we have
+  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples_update.csv"),header=T)
+  have_lengths <- have_lengths[,c(2,5,10)]
+  names(have_lengths)[] <- c('species','length','type')
 
 
 
-  plot_parms <- data.frame(Linf = as.numeric(coef(plot_fit)[1]),
-				  K1 = as.numeric(coef(plot_fit)[2]),          
-				  a0 = as.numeric(coef(plot_fit)[3]), 
-				  L0 =  mean(subset(plotme$population, age == 0)$length))
+###----- APRU
 
-  plot_vb <- data.frame(age = seq(0, plotme$parameters$Amax,0.1))
-  plot_vb$length <-plot_parms$Linf*(1-exp(-(plot_parms$K1)*(plot_vb$age-plot_parms$a0)))
- 
+  full_name <- "Aphareus rutilans"
+  bin_width <- 5
+  have <- subset(have_lengths, species ==  full_name)		
 
-  plot_pop <- sample_n(plotme$population, 10000)
-  plot(plot_pop$age, plot_pop$length, main = "Population length at age", xlab = "years", ylab = "cm")
-  lines(plot_vb$age, plot_vb$length, lty=1, lwd=2, col="red")
-
-
-
-
-
-
-
-
-
-# ------- first, read in the .csv of samples by species and length that we already have, simplify
-
-have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples.csv"),header=T)
-BMUS_names <- c("Aphareus rutilans", "Caranx ignobilis", "Caranx lugubris", "Etelis carbunculus", "Etelis coruscans", 
-				"Lethrinus rubrioperculatus", "Lutjanus kasmira", "Pristipomoides auricilla", 
-				"Pristipomoides filamentosus", "Pristipomoides flavipinnis", "Pristipomoides sieboldii", 
-				"Pristipomoides zonatus", "Variola louti")
-
-have_lengths <- subset(have_lengths, ScientificName %in% BMUS_names)
-summary(as.factor(have_lengths$ScientificName))			# there are no ignobilis, rubrio, kasmira, or sieboldii
-
-have_lengths <- have_lengths[,c(2,5)]
-names(have_lengths)[] <- c('species','length')
-
-# ===== QUESTION 1: ===================
-#  Using onaga as an example, what do we have, what would POS look like for an unfished population, and what do we need?
-
-# -- 1. 
-  have <- subset(have_lengths, species == 'Etelis coruscans')
-  # hist_have <- hist(have$length, breaks = seq(0,120,5),include.lowest=TRUE, right=FALSE,plot=TRUE)
-
-  we_have <- data.frame('binL' = hist_have$breaks[1:(length(hist_have$breaks)-1)], 'have' = hist_have$counts)
-
-
-# -- step 3. what would a POS approach look like, if we could sample directly from the population?
-#  	use the find_POS function
-
-  plan <- find_POS(sim_output = onaga, samp_size = 300, Lbin_width = 5)		#  str(plan)
-
-  plot(onaga$population$age, onaga$population$length)
-
-# -- 4. put together do figures and tables.
-
-  summary <- merge(x=plan, y=we_have, by= 'binL', all.x = TRUE)
-  summary$need <- pmax(0,(summary$plan-summary$have))
-  summary$best <- pmax(summary$plan, summary$have)
-
-# so....  that's the answer. If using a strict POS, if we want N = whatever, here we are.
-
-
-# ===== QUESTION 2: ===================
-#  A more interesting question is, if we fit von B using a given sampling plan, what would the error be?
-
-# -- 1. repeats step 1 and 2 from above
-# -- 2. 
-
-# -- 3. define the sample plan (lower bin edge and number of samples per bin).
-#		this might be what we have or what we want.
-
- sample_plan <- data.frame(binL = summary$binL, nsamps = summary$have)		# str(sample_plan)
-
- # use a new function to bootstrap sample the population according to this plan and fit the von Bert
-
-  sim_output <- onaga
-  n_boots <- 100
-  age_max <- sim_output$parameters$age_max		# define age max which is for CV_L_old
+  sample_plan <- APRU_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- APRU
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
   save_bootstraps <- FALSE
 
-  sample_plan_1_results <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
-
-  names(sample_plan_1_results)
-
-sample_plan_1_results$parameter_summary_all_boots
-sample_plan_1_results$pop_parms
+  APRU_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
 
 
-# -- 4. make some figures
+###----- ETCA
 
-   plan <- sample_plan_1_results$params_input_output$sample_plan 
-   parm_summary <- sample_plan_1_results$parameter_summary_all_boots			#str(parm_summary)
-   parm_pop <- sample_plan_1_results$pop_parms
-    
+  full_name <- "Etelis carbunculus"
+  bin_width <- 5
+  have <- subset(have_lengths, species ==  full_name)		
 
-
-
-    p_plan <- ggplot(data=plan, aes(x=binL, y=nsamps )) +
-		    geom_bar(stat="identity",fill='#008998') +
-		    scale_x_continuous(n.breaks=10) +
-		    theme_LH_bar() +
-		    annotate("text", x=(0.1*max(plan$binL)), y=(0.9*max(plan$nsamps)), label = paste0("N = ",sum(plan$nsamps))) +
- 		    labs(title="", subtitle="", y="Number samples", x="Lower edge of length bin", caption="")
- 
-#  error in absolute
-   
-    p_Linf <- ggplot(data=subset(parm_summary, parm_name=='Linf'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$Linf, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
-
-    p_k <- ggplot(data=subset(parm_summary, parm_name=='K1'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$K1, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="", x="", caption="")
-
-    p_L0 <- ggplot(data=subset(parm_summary, parm_name=='L0'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$L0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
-
-    ggsave(paste0(this_dir,"/figures/onaga_1A.png"),grid.arrange(grobs=list(p_plan), ncol=1),width=7.5, height=3, units="in")	
-    ggsave(paste0(this_dir,"/figures/onaga_1B.png"),grid.arrange(grobs=list(p_k, p_L0, p_Linf), ncol=3),width=5, height=2, units="in")
-	 
-  
-#  relative error  (obs-true/true)
-
-   parm_summary_raw <- sample_plan_1_results$parameter_summary_all_boots[c(1,2,6),]			#str(parm_summary)
-   parm_pop <- as.numeric(sample_plan_1_results$pop_parms[c(1,2,4)])
-    
-   rel_summary <- data.frame(parm_name = parm_summary_raw$parm_name, 
-					lower95 = (parm_summary_raw[,"lower95"] - parm_pop)/parm_pop,
-					lower50 = (parm_summary_raw[,"lower50"] - parm_pop)/parm_pop,
-					avg = (parm_summary_raw[,"avg"] - parm_pop)/parm_pop,
-					upper50 = (parm_summary_raw[,"upper50"] - parm_pop)/parm_pop,   
-					upper95 = (parm_summary_raw[,"upper95"] - parm_pop)/parm_pop)
-
-   p_rel <- ggplot(data=rel_summary, aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="relative error", x="", caption="")
-
-   ggsave(paste0(this_dir,"/figures/onaga_1B_rel.png"),p_rel,width=5, height=2, units="in")
-	
-
-# -- repeat steps 3 and 4 for an ideal sampling approach
-
- sample_plan <- data.frame(binL = summary$binL, nsamps = summary$best)		# str(sample_plan)
-
- # use a new function to bootstrap sample the population according to this plan and fit the von Bert
-
-  sim_output <- onaga
-  n_boots <- 100
-  age_max <- sim_output$parameters$age_max		# define age max which is for CV_L_old
+  sample_plan <- ETCA_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- ETCA
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
   save_bootstraps <- FALSE
 
-  sample_plan_2_results <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
-
-# -- 4. make some figures
-
-   plan <- sample_plan_2_results$params_input_output$sample_plan 
-   parm_summary <- sample_plan_2_results$parameter_summary_all_boots			#str(parm_summary)
-   parm_pop <- sample_plan_2_results$pop_parms
-    
-
-
-    p_plan <- ggplot(data=plan, aes(x=binL, y=nsamps )) +
-		    geom_bar(stat="identity",fill='#008998') +
-		    scale_x_continuous(n.breaks=10) +
-		    theme_LH_bar() +
-		    annotate("text", x=(0.1*max(plan$binL)), y=(0.9*max(plan$nsamps)), label = paste0("N = ",sum(plan$nsamps))) +
- 		    labs(title="", subtitle="", y="Number samples", x="Lower edge of length bin", caption="")
- 
-#  error in absolute
-   
-    p_Linf <- ggplot(data=subset(parm_summary, parm_name=='Linf'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$Linf, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
-
-    p_k <- ggplot(data=subset(parm_summary, parm_name=='K1'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$K1, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="", x="", caption="")
-
-    p_L0 <- ggplot(data=subset(parm_summary, parm_name=='L0'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$L0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
-
-    ggsave(paste0(this_dir,"/figures/onaga_2A.png"),grid.arrange(grobs=list(p_plan), ncol=1),width=7.5, height=3, units="in")	
-    ggsave(paste0(this_dir,"/figures/onaga_2B.png"),grid.arrange(grobs=list(p_k, p_L0, p_Linf), ncol=3),width=5, height=2, units="in")
-	 
-  
-#  relative error  (obs-true/true)
-
-   parm_summary_raw <- sample_plan_2_results$parameter_summary_all_boots[c(1,2,6),]			#str(parm_summary)
-   parm_pop <- as.numeric(sample_plan_2_results$pop_parms[c(1,2,4)])
-    
-   rel_summary <- data.frame(parm_name = parm_summary_raw$parm_name, 
-					lower95 = (parm_summary_raw[,"lower95"] - parm_pop)/parm_pop,
-					lower50 = (parm_summary_raw[,"lower50"] - parm_pop)/parm_pop,
-					avg = (parm_summary_raw[,"avg"] - parm_pop)/parm_pop,
-					upper50 = (parm_summary_raw[,"upper50"] - parm_pop)/parm_pop,   
-					upper95 = (parm_summary_raw[,"upper95"] - parm_pop)/parm_pop)
-
-   p_rel <- ggplot(data=rel_summary, aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="relative error", x="", caption="")
-
-   ggsave(paste0(this_dir,"/figures/onaga_2B_rel.png"),p_rel,width=5, height=2, units="in")
-	
+  ETCA_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
 
 
 
-# -- repeat steps 3 and 4 for an imaginary sample addition
+###----- ETCO
 
- sample_plan <- data.frame(binL = summary$binL, nsamps = summary$have)	# add in some samples
- sample_plan$nsamps[6] <- 3
+  full_name <- "Etelis coruscans"
+  bin_width <- 5
+  have <- subset(have_lengths, species ==  full_name)		
 
- # use a new function to bootstrap sample the population according to this plan and fit the von Bert
-
-  sim_output <- onaga
-  n_boots <- 100
-  age_max <- sim_output$parameters$age_max		# define age max which is for CV_L_old
+  sample_plan <- ETCO_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- ETCO
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
   save_bootstraps <- FALSE
 
-  sample_plan_3_results <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
-
-# -- 4. make some figures
-
-   plan <- sample_plan_3_results$params_input_output$sample_plan 
-   parm_summary <- sample_plan_3_results$parameter_summary_all_boots			#str(parm_summary)
-   parm_pop <- sample_plan_3_results$pop_parms
-    
-
-    p_plan <- ggplot(data=plan, aes(x=binL, y=nsamps )) +
-		    geom_bar(stat="identity",fill='#008998') +
-		    scale_x_continuous(n.breaks=10) +
-		    theme_LH_bar() +
-		    annotate("text", x=(0.1*max(plan$binL)), y=(0.9*max(plan$nsamps)), label = paste0("N = ",sum(plan$nsamps))) +
- 		    labs(title="", subtitle="", y="Number samples", x="Lower edge of length bin", caption="")
- 
-#  error in absolute
-   
-    p_Linf <- ggplot(data=subset(parm_summary, parm_name=='Linf'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$Linf, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
-
-    p_k <- ggplot(data=subset(parm_summary, parm_name=='K1'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$K1, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="", x="", caption="")
-
-    p_L0 <- ggplot(data=subset(parm_summary, parm_name=='L0'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$L0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
-
-    ggsave(paste0(this_dir,"/figures/onaga_3A.png"),grid.arrange(grobs=list(p_plan), ncol=1),width=7.5, height=3, units="in")	
-    ggsave(paste0(this_dir,"/figures/onaga_3B.png"),grid.arrange(grobs=list(p_k, p_L0, p_Linf), ncol=3),width=5, height=2, units="in")
-	 
-  
-#  relative error  (obs-true/true)
-
-   parm_summary_raw <- sample_plan_3_results$parameter_summary_all_boots[c(1,2,6),]			#str(parm_summary)
-   parm_pop <- as.numeric(sample_plan_3_results$pop_parms[c(1,2,4)])
-    
-   rel_summary <- data.frame(parm_name = parm_summary_raw$parm_name, 
-					lower95 = (parm_summary_raw[,"lower95"] - parm_pop)/parm_pop,
-					lower50 = (parm_summary_raw[,"lower50"] - parm_pop)/parm_pop,
-					avg = (parm_summary_raw[,"avg"] - parm_pop)/parm_pop,
-					upper50 = (parm_summary_raw[,"upper50"] - parm_pop)/parm_pop,   
-					upper95 = (parm_summary_raw[,"upper95"] - parm_pop)/parm_pop)
-
-   p_rel <- ggplot(data=rel_summary, aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="relative error", x="", caption="")
-
-   ggsave(paste0(this_dir,"/figures/onaga_3B_rel.png"),p_rel,width=5, height=2, units="in")
-	
+  ETCO_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
 
 
 
+###----- PRAU
 
-# -- repeat steps 3 and 4 for perfect POS only
+  full_name <- "Pristipomoides auricilla"
+  bin_width <- 2
+  have <- subset(have_lengths, species ==  full_name)		
 
- sample_plan <- data.frame(binL = summary$binL, nsamps = summary$plan)
-
- # use a new function to bootstrap sample the population according to this plan and fit the von Bert
-
-  sim_output <- onaga
-  n_boots <- 100
-  age_max <- sim_output$parameters$age_max		# define age max which is for CV_L_old
+  sample_plan <- PRAU_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- PRAU
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
   save_bootstraps <- FALSE
 
-  sample_plan_4_results <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
+  PRAU_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
 
-# -- 4. make some figures
 
-   plan <- sample_plan_4_results$params_input_output$sample_plan 
-   parm_summary <- sample_plan_4_results$parameter_summary_all_boots			#str(parm_summary)
-   parm_pop <- sample_plan_4_results$pop_parms
-    
+###----- PRFI
 
-    p_plan <- ggplot(data=plan, aes(x=binL, y=nsamps )) +
-		    geom_bar(stat="identity",fill='#008998') +
-		    scale_x_continuous(n.breaks=10) +
-		    theme_LH_bar() +
-		    annotate("text", x=(0.1*max(plan$binL)), y=(0.9*max(plan$nsamps)), label = paste0("N = ",sum(plan$nsamps))) +
- 		    labs(title="", subtitle="", y="Number samples", x="Lower edge of length bin", caption="")
- 
-#  error in absolute
-   
-    p_Linf <- ggplot(data=subset(parm_summary, parm_name=='Linf'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$Linf, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
+  full_name <- "Pristipomoides filamentosus"
+  bin_width <- 2
+  have <- subset(have_lengths, species ==  full_name)		
 
-    p_k <- ggplot(data=subset(parm_summary, parm_name=='K1'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$K1, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="", x="", caption="")
+  sample_plan <- PRFI_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- PRFI
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
 
-    p_L0 <- ggplot(data=subset(parm_summary, parm_name=='L0'), aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = parm_pop$L0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="cm", x="", caption="")
+  PRFI_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
 
-    ggsave(paste0(this_dir,"/figures/onaga_4A.png"),grid.arrange(grobs=list(p_plan), ncol=1),width=7.5, height=3, units="in")	
-    ggsave(paste0(this_dir,"/figures/onaga_4B.png"),grid.arrange(grobs=list(p_k, p_L0, p_Linf), ncol=3),width=5, height=2, units="in")
-	 
-  
-#  relative error  (obs-true/true)
 
-   parm_summary_raw <- sample_plan_4_results$parameter_summary_all_boots[c(1,2,6),]			#str(parm_summary)
-   parm_pop <- as.numeric(sample_plan_4_results$pop_parms[c(1,2,4)])
-    
-   rel_summary <- data.frame(parm_name = parm_summary_raw$parm_name, 
-					lower95 = (parm_summary_raw[,"lower95"] - parm_pop)/parm_pop,
-					lower50 = (parm_summary_raw[,"lower50"] - parm_pop)/parm_pop,
-					avg = (parm_summary_raw[,"avg"] - parm_pop)/parm_pop,
-					upper50 = (parm_summary_raw[,"upper50"] - parm_pop)/parm_pop,   
-					upper95 = (parm_summary_raw[,"upper95"] - parm_pop)/parm_pop)
+###----- PRFL
 
-   p_rel <- ggplot(data=rel_summary, aes(x=parm_name)) +
-		geom_boxplot(aes(ymin = lower95, lower = lower50, middle = avg, 
-			upper = upper50, ymax = upper95), stat = "identity", fill='#E8E8E8') +
- 		theme_LH_bar() +
-		geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-		labs(title="", subtitle="", y="relative error", x="", caption="")
+  full_name <- "Pristipomoides flavipinnis"
+  bin_width <- 2
+  have <- subset(have_lengths, species ==  full_name)		
 
-   ggsave(paste0(this_dir,"/figures/onaga_4B_rel.png"),p_rel,width=5, height=2, units="in")
-	
+  sample_plan <- PRFL_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- PRFL
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
 
+  PRFL_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
+
+
+###----- PRZO
+
+  full_name <- "Pristipomoides zonatus"
+  bin_width <- 2
+  have <- subset(have_lengths, species ==  full_name)		
+
+  sample_plan <- PRZO_original <- get_plan(have, bin_width, original=TRUE)
+  sim_output <- PRZO
+  n_boots <- 1000
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  PRZO_sim_fit_org <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps) 
+
+
+#  save
+
+ save(APRU_sim_fit_org, ETCA_sim_fit_org, ETCO_sim_fit_org, 
+	PRAU_sim_fit_org, PRFI_sim_fit_org, PRFL_sim_fit_org, 
+	PRZO_sim_fit_org , file = paste0(this_dir, "/original_sample_fits_2July.RData"))
 
 
 

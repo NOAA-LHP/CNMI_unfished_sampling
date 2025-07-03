@@ -18,8 +18,13 @@ if (!require("pacman")) install.packages("pacman")
 
   this_dir <- this.path::here(.. = 0)
   
-# load the workspace containing our simulated populations
+# load the workspace containing our simulated populations from create_simulated_pops.R
   load(paste0(this_dir, "/simulated_pops.RData"))
+
+# load in the workspace containing our growth parm estimates based on the original (pre Sette05 cruise) sample distributions
+#   this workspace was made in create_simulated_pops.R and only needs to be updated if we change the values in
+# BMUS_LH_sim_pop_parmaters.xls or if the list of "unfished CNMI" samples that Eva originally gave me gets changed.
+  load(paste0(this_dir, "/original_sample_fits_2July.RData"))
 
 # read in the modified LH Sampling functions
   source(paste0(this_dir, "/modify_LH_sample_function.R"))
@@ -28,281 +33,280 @@ if (!require("pacman")) install.packages("pacman")
   source(paste0(this_dir, "/plotting_functions.R")) 
   
 # read in the .csv file with the species and lengths that we have
-  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples.csv"),header=T)
+  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples_update.csv"),header=T)
   have_lengths <- have_lengths[,c(2,5,10)]
   
   names(have_lengths)[] <- c('species','length','type')
 ```
 
 ``` {r , include = FALSE, eval = TRUE}
-  short_name <- 'PRZO'
-  full_name <- 'Pristipomoides zonatus'
-  sim_pop_harv_output <- PRZO
+# define leading values for this species
+  short_name <- 'APRU'
+  full_name <- 'Aphareus rutilans'
+  sim_output <- sim_pop_harv_output <- APRU
+  bin_width <- 5
+  sim_fit_original <- APRU_sim_fit_org
     
+# filter lengths    
   have <- subset(have_lengths, species ==  full_name)
-  hist_have <- hist(have$length, breaks = seq(0,120,5),include.lowest=TRUE, right=FALSE,plot=TRUE)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
 
-  we_have <- data.frame('binL' = hist_have$breaks[1:(length(hist_have$breaks)-1)], 'have' = hist_have$counts)
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
 
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
   
 ```
 
 ## *`r full_name`* / `r short_name`
 
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
-
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
 
-``` {r ETCA, include = FALSE, eval = TRUE}
-
+``` {r , include = FALSE, eval = TRUE}
+# define leading values for this species
   short_name <- 'ETCA'
-  full_name <- 'E. carbunculus'
-  sim_pop_harv_output <- ETCA
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+  full_name <- 'Etelis carbunculus'
+  sim_output <- sim_pop_harv_output <- ETCA
+  bin_width <- 5
+  sim_fit_original <- ETCA_sim_fit_org
     
+# filter lengths    
+  have <- subset(have_lengths, species ==  full_name)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
+  
 ```
 
 ## *`r full_name`* / `r short_name`
 
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
-
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
 
 
-
-``` {r ETCO, include = FALSE, eval = TRUE}
-
+``` {r , include = FALSE, eval = TRUE}
+# define leading values for this species
   short_name <- 'ETCO'
-  full_name <- 'E. coruscans'
-  sim_pop_harv_output <- ETCO
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+  full_name <- 'Etelis coruscans'
+  sim_output <- sim_pop_harv_output <- ETCO
+  bin_width <- 5
+  sim_fit_original <- ETCO_sim_fit_org
     
+# filter lengths    
+  have <- subset(have_lengths, species ==  full_name)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
+  
 ```
 
 ## *`r full_name`* / `r short_name`
 
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
-
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
-``` {r PRAU, include = FALSE, eval = TRUE}
 
+``` {r , include = FALSE, eval = TRUE}
+# define leading values for this species
   short_name <- 'PRAU'
-  full_name <- 'P. auricilla'
-  sim_pop_harv_output <- PRAU
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+  full_name <- 'Pristipomoides auricilla'
+  sim_output <- sim_pop_harv_output <- PRAU
+  bin_width <- 2
+  sim_fit_original <- PRAU_sim_fit_org
     
+# filter lengths    
+  have <- subset(have_lengths, species ==  full_name)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
+  
 ```
 
 ## *`r full_name`* / `r short_name`
 
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
-
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
-``` {r PRFI, include = FALSE, eval = TRUE}
-
+``` {r , include = FALSE, eval = TRUE}
+# define leading values for this species
   short_name <- 'PRFI'
-  full_name <- 'P. filamentosus'
-  sim_pop_harv_output <- PRFI
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+  full_name <- 'Pristipomoides filamentosus'
+  sim_output <- sim_pop_harv_output <- PRFI
+  bin_width <- 2
+  sim_fit_original <- PRFI_sim_fit_org
     
+# filter lengths    
+  have <- subset(have_lengths, species ==  full_name)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
+  
 ```
 
 ## *`r full_name`* / `r short_name`
 
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
-
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
-``` {r PRFL, include = FALSE, eval = TRUE}
 
+``` {r , include = FALSE, eval = TRUE}
+# define leading values for this species
   short_name <- 'PRFL'
-  full_name <- 'P. flavipinnis'
-  sim_pop_harv_output <- PRFL
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+  full_name <- 'Pristipomoides flavipinnis'
+  sim_output <- sim_pop_harv_output <- PRFL
+  bin_width <- 2
+  sim_fit_original <- PRFL_sim_fit_org
     
+# filter lengths    
+  have <- subset(have_lengths, species ==  full_name)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
+  
 ```
 
 ## *`r full_name`* / `r short_name`
 
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
-
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
 
-``` {r PRZO, include = FALSE, eval = TRUE}
-
+``` {r , include = FALSE, eval = TRUE}
+# define leading values for this species
   short_name <- 'PRZO'
-  full_name <- 'P. zonatus'
-  sim_pop_harv_output <- PRZO
-  this_M <- sim_pop_harv_output$parameters$M
-  this_Amax <- sim_pop_harv_output$parameters$Amax
+  full_name <- 'Pristipomoides zonatus'
+  sim_output <- sim_pop_harv_output <- PRZO
+  bin_width <- 2
+  sim_fit_original <- PRZO_sim_fit_org
     
+# filter lengths    
+  have <- subset(have_lengths, species ==  full_name)
+  
+# return the plan for the updated samples  
+  sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# bootstrap samples and fit von B parms
+  n_boots <- 100
+  age_max <- sim_output$parameters$age_max
+  save_bootstraps <- FALSE
+
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
 ```
 
 ## *`r full_name`* / `r short_name`
 
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 6.5, fig.width = 6.5}
-plot_pop_vb_parms(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
+plot_LH_have(have, bin_width)
 ```
 
-Figure. Simulated population von Bertalanffy growth parameters for `r short_name`. Natural mortality is dependent on length via Lorenzen, overall **M = `r this_M`**. Max age is **`r this_Amax` years**. Vertical line is the population median for each parameter. The value of the correlation coefficient is printed on the lower right plot where the theoretical relationship between Linf and k is denoted by the broken red line.
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 5}
-plot_pop_n_at_age(sim_pop_harv_output)
+```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
+grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Simulated `r short_name` unfished population length composition.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 05 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
-|
-|
-
-
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 4, fig.width = 5}
-plot_fit_pop(sim_pop_harv_output)
-```
-
-Figure. Simulated `r short_name` unfished population with the fitted von Bertalanffy growth function.
 

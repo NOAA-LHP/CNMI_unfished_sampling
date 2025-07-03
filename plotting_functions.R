@@ -92,28 +92,94 @@ if (!require("pacman")) install.packages("pacman")
   this_dir <- this.path::here(.. = 0)
 
 
-  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples.csv"),header=T)
+  have_lengths <- read.csv(paste0(this_dir,"\\cnmi_unfished_samples_update.csv"),header=T)
   have_lengths <- have_lengths[,c(2,5,10)]
   
   names(have_lengths)[] <- c('species','length','type')
 
+  full_name <- 'Pristipomoides zonatus'
+  have <- subset(have_lengths, species ==  full_name)
+  bin_width <- 2
+
+  PRZO_plan_orig <- get_plan(have, bin_width, original=TRUE)
+  PRZO_plan_all <- get_plan(have, bin_width, original=FALSE)
+  sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
+
 }
 
 
-plot_LH_have <- function(have_lengths) {
 
-  par(omi=c(0.1,0.1,0.1,0.1)) #set outer margins
-  par(mai=c(0.8,0.2, 0.3, 0.1)) #set inner margins
 
-  hist(sim_pop_harv_output$population$length,include.lowest=TRUE, right=FALSE,plot=TRUE,
-		main = "Population N at length", xlab= "cm", yaxt = "n")
 
-  plot_pop_n_at_age <- recordPlot()
+
+
+plot_LH_have <- function(have, bin_width) {
+
+  bin_breaks <- seq(0,max(have$length, na.rm=TRUE) + bin_width, bin_width)
+
+  plot_have <- ggplot(have, aes(length, fill = type)) +
+    geom_histogram(breaks=bin_breaks, color='black', closed = "left")+
+    scale_fill_manual(values=sample_type_cols) +
+    theme_LH_bar() +
+    geom_hline(yintercept = 0) +
+    theme(legend.position = "right", ) +
+    theme(legend.title=element_blank()) +
+    labs(title="", subtitle="", y="Number samples", x="Length, cm", caption="")
+
+  return(plot_have)
 
   }
 
 
 
+parm_abs_error_plot <- function(sim_fit_original, sim_fit_update) {
+   
+    p_Linf <- ggplot() +
+		geom_boxplot(data=subset(sim_fit_update$parameter_summary_all_boots, parm_name=='Linf'), aes(x=parm_name,
+			ymin = lower95, lower = lower50, middle = avg, 
+			upper = upper50, ymax = upper95), stat = "identity", color=sample_type_cols[2], fill = NA) +
+		geom_boxplot(data=subset(sim_fit_original$parameter_summary_all_boots, parm_name=='Linf'), aes(x=parm_name,
+			ymin = lower95, lower = lower50, middle = avg, 
+			upper = upper50, ymax = upper95), stat = "identity", color=sample_type_cols[1], fill = NA) +
+		theme_LH_bar() +
+		theme(axis.text.x = element_blank()) +
+		geom_hline(yintercept = sim_fit_original$pop_parms$Linf, linetype = "dashed", color = "black") +
+		labs(title="Linf", subtitle="", y="cm", x="", caption="")
+
+    p_k <- ggplot() +
+		geom_boxplot(data=subset(sim_fit_update$parameter_summary_all_boots, parm_name=='K1'), aes(x=parm_name,
+			ymin = lower95, lower = lower50, middle = avg, 
+			upper = upper50, ymax = upper95), stat = "identity", color=sample_type_cols[2], fill = NA) +
+		geom_boxplot(data=subset(sim_fit_original$parameter_summary_all_boots, parm_name=='K1'), aes(x=parm_name,
+			ymin = lower95, lower = lower50, middle = avg, 
+			upper = upper50, ymax = upper95), stat = "identity", color=sample_type_cols[1], fill = NA) +
+ 		theme_LH_bar() +
+		theme(axis.text.x = element_blank()) +
+		geom_hline(yintercept = sim_fit_original$pop_parms$K1, linetype = "dashed", color = "black") +
+		labs(title="k", subtitle="", y="", x="", caption="")
+
+    p_L0 <- ggplot() +
+		geom_boxplot(data=subset(sim_fit_update$parameter_summary_all_boots, parm_name=='L0'), aes(x=parm_name,
+			ymin = lower95, lower = lower50, middle = avg, 
+			upper = upper50, ymax = upper95), stat = "identity", color=sample_type_cols[2], fill = NA) +
+		geom_boxplot(data=subset(sim_fit_original$parameter_summary_all_boots, parm_name=='L0'), aes(x=parm_name,
+			ymin = lower95, lower = lower50, middle = avg, 
+			upper = upper50, ymax = upper95), stat = "identity", color=sample_type_cols[1], fill = NA) +
+ 		theme_LH_bar() +
+		theme(axis.text.x = element_blank()) +
+		geom_hline(yintercept = sim_fit_original$pop_parms$L0, linetype = "dashed", color = "black") +
+		labs(title="L0", subtitle="", y="cm", x="", caption="")
+
+  return(list(p_Linf = p_Linf, p_k = p_k, p_L0 = p_L0))
+
+  }
+
+
+
+
+# chose colors for sample types
+
+sample_type_cols <- c('old' = '#00467F',  'new' = '#93D500')
 
 
 #  ggplot theme
