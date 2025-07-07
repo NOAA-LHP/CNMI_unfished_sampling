@@ -84,7 +84,8 @@ plot_pop_n_at_age <- function(sim_pop_harv_output) {
 if (1==2) {
 
 if (!require("pacman")) install.packages("pacman")
-    pacman::p_load(reshape, dplyr, ggplot2, magrittr, assertthat, gridExtra, readxl, this.path, kableExtra, flextable, gt, officer)
+    pacman::p_load(reshape, dplyr, ggplot2, magrittr, assertthat, gridExtra, readxl, 
+		grid, this.path, kableExtra, flextable, gt, officer)
 
 # turn off scientific notation in console output
   options(scipen=999)
@@ -105,24 +106,40 @@ if (!require("pacman")) install.packages("pacman")
   PRZO_plan_all <- get_plan(have, bin_width, original=FALSE)
   sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
 
+  max(have$length, na.rm=TRUE)
+nrow(subset(have, length > 0))
+
+
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  scale_x_continuous(breaks = c(2, 3, 4, 5), labels = c("Low", "Med", "High", "Very High"))
+
+
+
 }
-
-
-
-
 
 
 
 plot_LH_have <- function(have, bin_width) {
 
   bin_breaks <- seq(0,max(have$length, na.rm=TRUE) + bin_width, bin_width)
+  N_new <- nrow(subset(have, length > 0 & type == 'new'))
+  N_old <- nrow(subset(have, length > 0 & type == 'old'))
+
+	N_new_print <- grobTree(textGrob(paste0("N = ", N_new), 
+		x=0.1,  y=0.95, hjust=0, gp=gpar(fontsize=11, col=sample_type_cols[2])))
+
+	N_old_print <- grobTree(textGrob(paste0("N = ", N_old), 
+		x=0.1,  y=0.85, hjust=0, gp=gpar(fontsize=11, col=sample_type_cols[1])))
 
   plot_have <- ggplot(have, aes(length, fill = type)) +
     geom_histogram(breaks=bin_breaks, color='black', closed = "left")+
     scale_fill_manual(values=sample_type_cols) +
     theme_LH_bar() +
     geom_hline(yintercept = 0) +
-    theme(legend.position = "right", ) +
+    annotation_custom(N_new_print) +
+    annotation_custom(N_old_print) +
+    theme(legend.position = "right", axis.text.x = element_text(margin = margin(t = 5))) +
     theme(legend.title=element_blank()) +
     labs(title="", subtitle="", y="Number samples", x="Length, cm", caption="")
 
