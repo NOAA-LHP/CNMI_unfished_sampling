@@ -55,9 +55,11 @@ new_lengths <- as.data.frame(read_excel(paste0(this_dir, "/SE-25-04_data_0720202
   bin_width <- 5
   sim_fit_original <- APRU_sim_fit_org
     
-# filter lengths    
+# filter new lengths    
   have <- subset(have_lengths, species ==  full_name)
   have_new <- subset(new_lengths, SPECIES_CODE == short_name)
+  
+  
   build_new <- data.frame('species' = full_name, 'length' = as.numeric(have_new$FL_cm), 'type' = 'new')
   have <- rbind(have, build_new)
   
@@ -121,14 +123,34 @@ plot_LH_have(have, bin_width)
   bin_width <- 5
   sim_fit_original <- ETCA_sim_fit_org
     
-# filter lengths    
+# filter new lengths   
   have <- subset(have_lengths, species ==  full_name)
    have_new <- subset(new_lengths, SPECIES_CODE == short_name)
   build_new <- data.frame('species' = full_name, 'length' = as.numeric(have_new$FL_cm), 'type' = 'new')
   have <- rbind(have, build_new)
   
+# what is rel POS?
+POS_N <- 500
+POS_plan <-  find_POS(sim_output, POS_N, bin_width)
+POS_plan$rel_plan <- POS_plan$plan/POS_N
+
 # return the plan for the updated samples  
   sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# modify sample_plan to better match POS
+new_plan <- cbind(sample_plan, POS_plan$rel_plan)  
+names(new_plan)[3] <- 'pos_rel'
+new_plan$pos_abs <- round(sum(new_plan$nsamps)*new_plan$pos_rel,0)
+new_plan$new_nsamps <- new_plan$nsamps
+
+for (i in 1:nrow(new_plan)) {
+    if(new_plan$pos_abs[i] < new_plan$nsamps[i]) {
+      new_plan$new_nsamps[i] <- new_plan$pos_abs[i]
+    }
+}
+
+sample_plan <- new_plan[,c(1,5)]
+names(sample_plan)[2] <- 'nsamps'
 
 # bootstrap samples and fit von B parms
   n_boots <- 100
@@ -255,8 +277,30 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
   build_new <- data.frame('species' = full_name, 'length' = as.numeric(have_new$FL_cm), 'type' = 'new')
   have <- rbind(have, build_new)
   
+
+# what is rel POS?
+POS_N <- 500
+POS_plan <-  find_POS(sim_output, POS_N, bin_width)
+POS_plan$rel_plan <- POS_plan$plan/POS_N
+
 # return the plan for the updated samples  
   sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# modify sample_plan to better match POS
+new_plan <- cbind(sample_plan[1:nrow(POS_plan),], POS_plan$rel_plan)  
+names(new_plan)[3] <- 'pos_rel'
+new_plan$pos_abs <- round(sum(new_plan$nsamps)*new_plan$pos_rel,0)
+new_plan$new_nsamps <- new_plan$nsamps
+
+for (i in 1:nrow(new_plan)) {
+    if(new_plan$pos_abs[i] < new_plan$nsamps[i]) {
+      new_plan$new_nsamps[i] <- new_plan$pos_abs[i]
+    }
+}
+
+sample_plan <- new_plan[,c(1,5)]
+names(sample_plan)[2] <- 'nsamps'
+
 
 # bootstrap samples and fit von B parms
   n_boots <- 100
@@ -297,9 +341,30 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
    have_new <- subset(new_lengths, SPECIES_CODE == short_name)
   build_new <- data.frame('species' = full_name, 'length' = as.numeric(have_new$FL_cm), 'type' = 'new')
   have <- rbind(have, build_new)
+
   
+# what is rel POS?
+POS_N <- 500
+POS_plan <-  find_POS(sim_output, POS_N, bin_width)
+POS_plan$rel_plan <- POS_plan$plan/POS_N
+
 # return the plan for the updated samples  
   sample_plan <- plan_updated <- get_plan(have, bin_width, original=FALSE)
+
+# modify sample_plan to better match POS
+new_plan <- cbind(sample_plan[1:nrow(POS_plan),], POS_plan$rel_plan)  
+names(new_plan)[3] <- 'pos_rel'
+new_plan$pos_abs <- round(sum(new_plan$nsamps)*new_plan$pos_rel,0)
+new_plan$new_nsamps <- new_plan$nsamps
+
+for (i in 1:nrow(new_plan)) {
+    if(new_plan$pos_abs[i] < new_plan$nsamps[i]) {
+      new_plan$new_nsamps[i] <- new_plan$pos_abs[i]
+    }
+}
+
+sample_plan <- new_plan[,c(1,5)]
+names(sample_plan)[2] <- 'nsamps'
 
 # bootstrap samples and fit von B parms
   n_boots <- 100

@@ -21,7 +21,7 @@ if (!require("pacman")) install.packages("pacman")
 # load the workspace containing our simulated populations from create_simulated_pops.R
   load(paste0(this_dir, "/simulated_pops.RData"))
 
-# load in the workspace containing our growth parm estimates based on the original (pre Sette-2025-04 cruise) sample distributions
+# load in the workspace containing our growth parm estimates based on the original (pre Sette05 cruise) sample distributions
 #   this workspace was made in create_simulated_pops.R and only needs to be updated if we change the values in
 # BMUS_LH_sim_pop_parmaters.xls or if the list of "unfished CNMI" samples that Eva originally gave me gets changed.
   load(paste0(this_dir, "/original_sample_fits_2July.RData"))
@@ -45,6 +45,8 @@ if (!require("pacman")) install.packages("pacman")
 new_lengths <- as.data.frame(read_excel(paste0(this_dir, "/SE-25-04_data_07202025.xlsx")))
 
 ```
+
+
 
 
 ``` {r , include = FALSE, eval = TRUE}
@@ -80,12 +82,12 @@ new_lengths <- as.data.frame(read_excel(paste0(this_dir, "/SE-25-04_data_0720202
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
@@ -104,12 +106,17 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
   
 ```
 
-\newpage
+
 ## *`r full_name`* / `r short_name` / Black Jack
 
 ```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
 plot_LH_have(have, bin_width)
 ```
+
+
+
+
+
 
 
 
@@ -140,18 +147,19 @@ plot_LH_have(have, bin_width)
 ```
 
 \newpage
+
 ## *`r full_name`* / `r short_name` / Ehu
 
 ```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
@@ -183,19 +191,20 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
   
 ```
 
-\newpage
+
 ## *`r full_name`* / `r short_name` / Onaga
 
 ```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
+
 
 
 
@@ -226,18 +235,19 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
 ```
 
 \newpage
+
 ## *`r full_name`* / `r short_name` / Kalekale
 
 ```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
@@ -267,19 +277,20 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
   
 ```
 
-\newpage
+
+
 ## *`r full_name`* / `r short_name` / Opakapaka / Brown paka
 
 ```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
@@ -311,18 +322,20 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
 ```
 
 \newpage
+
+
 ## *`r full_name`* / `r short_name` / Yellow-eye paka
 
 ```{r fig.cap = "", echo=FALSE,eval=TRUE,messages=FALSE,warning=FALSE, fig.height = 3, fig.width = 6.5}
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 04 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 
 
@@ -352,7 +365,6 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
   sim_fit_update <- fit_plan(sample_plan, sim_output, n_boots, age_max, save_bootstraps)
 ```
 
-\newpage
 ## *`r full_name`* / `r short_name` / Gindai
 
 
@@ -360,11 +372,11 @@ Figure. Samples of `r short_name` by length and simulated estimates of von Berta
 plot_LH_have(have, bin_width)
 ```
 
-```{r fig.cap = "", echo=FALSE, eval=TRUE, fig.height = 3, fig.width = 6.5}
+```{r fig.cap = "", echo=FALSE, eval=FALSE, fig.height = 3, fig.width = 6.5}
 parm_plots <- parm_abs_error_plot(sim_fit_original, sim_fit_update)
 grid.arrange(grobs=parm_plots, ncol=3)
 ```
 
-Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before Sette-2025-04 (blue) and updated to include fish lengths observed during the cruise (pink). The true population value for each parameter is shown as a broken black line.
+Figure. Samples of `r short_name` by length and simulated estimates of von Bertalanffy growth parameters based on samples available before the Sette 05 cruise (blue) and updated to include fish lengths observed during the cruise (green). The true population value for each parameter is shown as a broken black line.
 
 

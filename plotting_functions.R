@@ -196,8 +196,8 @@ parm_abs_error_plot <- function(sim_fit_original, sim_fit_update) {
 
 # chose colors for sample types
 
-sample_type_cols <- c('old' = '#00467F',  'new' = '#93D500')
-
+# sample_type_cols <- c('old' = '#00467F',  'new' = '#93D500')
+sample_type_cols <- c('old' = '#00467F',  'new' = '#FF10F0')
 
 #  ggplot theme
 
